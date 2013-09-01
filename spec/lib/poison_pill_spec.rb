@@ -35,20 +35,44 @@ describe PoisonPill do
     )
   end
 
-  it 'raises a error with an un-fulfilled container message if container un-fulfilled' do
-    stub(container).fulfilled?{ false }
-    expect{ @pill.some_method }.to raise_error(
-      PoisonPill::NotFulfilledError,
-      /some_attribute.*"container".*because the associated REST call has not been completed/
-    )
-  end
+  context 'when the container implements #fulfilled?' do
+    context ', if the container is fulfilled, ' do
+      before{ stub(container).fulfilled?{ false } }
 
-  it 'raises a error with an fulfilled container message if container is fulfilled' do
-    stub(container).fulfilled?{ true }
-    expect{ @pill.some_method }.to raise_error(
-      PoisonPill::NotFulfilledError,
-      /some_attribute.*"container".*even though the associated REST call was completed/
-    )
+      it 'the pill raises an error with an un-fulfilled container message' do
+        expect{ @pill.some_method }.to raise_error(
+          PoisonPill::NotFulfilledError,
+          /some_attribute.*"container".*because "container" was not fulfilled/
+        )
+      end
+
+      it 'the pill raises an error with container specific un-fulfilled message if the container implements #unfulfilled_message' do
+        stub(container).unfulfilled_message{ ", because something didn't happened" }
+        expect{ @pill.some_method }.to raise_error(
+          PoisonPill::NotFulfilledError,
+          /some_attribute.*"container".*because something didn't happened/
+        )
+      end
+    end
+
+    context ', if the container is fulfilled, ' do
+      before{ stub(container).fulfilled?{ true } }
+
+      it 'the pill raises an error with an un-fulfilled container message' do
+        expect{ @pill.some_method }.to raise_error(
+          PoisonPill::NotFulfilledError,
+          /some_attribute.*"container".*even though "container" was fulfilled/
+        )
+      end
+
+      it 'the pill raises an error with an fulfilled container message if container is fulfilled' do
+        stub(container).fulfilled_message{ " even though something happened" }
+        expect{ @pill.some_method }.to raise_error(
+          PoisonPill::NotFulfilledError,
+          /some_attribute.*"container".*even though something happened/
+        )
+      end
+    end
   end
 
   it 'raises a error with the called pathname' do

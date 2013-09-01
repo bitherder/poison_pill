@@ -32,9 +32,17 @@ class PoisonPill < BasicObject
     if @container.respond_to?(:fulfilled?)
       message +=
         if @container.fulfilled?
-          " even though the associated REST call was completed"
+          if @container.respond_to?(:fulfilled_message)
+            @container.fulfilled_message
+          else
+            " even though #{@container.inspect} was fulfilled"
+          end
         else
-          ", because the associated REST call has not been completed"
+          if @container.respond_to?(:unfulfilled_message)
+            @container.unfulfilled_message
+          else
+            ", because #{@container.inspect} was not fulfilled"
+          end
         end
     end
 
